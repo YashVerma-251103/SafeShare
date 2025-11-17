@@ -1,6 +1,10 @@
 # ? build project targets and options.
 cmake_minimum_required(VERSION 3.16)
 project(SafeShare LANGUAGES CXX)
+# add_library(frames src/common/frame.cpp)
+# target_link_libraries(frames nlohmann_json::nlohmann_json)
+# target_link_libraries(safeshare-server frames)
+# target_link_libraries(safeshare-client frames)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -2,7 +2,8 @@
 
 #include <iostream>
 #include <string>
-#include "client.cpp" // tiny trick to keep both compile units in this skeleton
+// #include "client.cpp" // tiny trick to keep both compile units in this skeleton
+#include "client.hpp" // tiny trick to keep both compile units in this skeleton
 
 int main(int argc, char **argv)
 {

@@ -6,6 +6,8 @@
 #include "file_manager.hpp"
 #include "chat_manager.hpp"
 
+#include "../common/framing.hpp"
+
 class Server
 {
 public:

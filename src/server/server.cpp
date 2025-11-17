@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <thread>
 #include <iostream>
+#include <fstream>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -137,6 +138,72 @@ void Server::handle_client(int client_fd, const std::string &peer_ip)
             ack["id"] = header.value("id", "");
             ack["status"] = "DELIVERED";
             send_frame(client_fd, ack);
+        }
+        else if (type == proto::MSG_DOWNLOAD_REQ)
+        {
+            std::string token = header.value("token", "");
+            std::string filename = header.value("path", "");
+
+            // 1. Validate Token
+            if (!tokens_.validateToken(token, filename))
+            {
+                json e;
+                e["type"] = proto::MSG_ERROR;
+                e["message"] = "UNAUTHORIZED";
+                send_frame(client_fd, e);
+                continue;
+            }
+
+            // 2. Check File Existence
+            if (!files_.exists(filename))
+            {
+                json e;
+                e["type"] = proto::MSG_ERROR;
+                e["message"] = "NOT_FOUND";
+                send_frame(client_fd, e);
+                continue;
+            }
+
+            // 3. Start Transfer
+            // Construct full path (safety checked by FileManager::exists previously)
+            // Note: You might want to expose a "getFullPath" in FileManager to be cleaner
+            std::string full_path = shared_root_ + "/" + filename;
+            std::ifstream file(full_path, std::ios::binary);
+
+            if (!file.is_open())
+            {
+                json e;
+                e["type"] = proto::MSG_ERROR;
+                e["message"] = "OPEN_FAILED";
+                send_frame(client_fd, e);
+                continue;
+            }
+
+            // Send Start Response
+            json start_resp;
+            start_resp["type"] = proto::MSG_DOWNLOAD_RESP;
+            start_resp["filename"] = filename;
+            send_frame(client_fd, start_resp);
+
+            // 4. Stream Chunks
+            std::vector<uint8_t> buffer(64 * 1024); // 64KB chunks
+            while (file.read((char *)buffer.data(), buffer.size()) || file.gcount() > 0)
+            {
+                json chunk_hdr;
+                chunk_hdr["type"] = proto::MSG_FILE_CHUNK;
+                chunk_hdr["payload_len"] = file.gcount();
+
+                // Resize buffer to actual bytes read for the last chunk
+                std::vector<uint8_t> chunk_data(buffer.begin(), buffer.begin() + file.gcount());
+
+                send_frame(client_fd, chunk_hdr, &chunk_data);
+            }
+
+            // 5. End Transfer
+            json end_resp;
+            end_resp["type"] = proto::MSG_TRANSFER_END;
+            send_frame(client_fd, end_resp);
+            std::cout << "[server] Sent file: " << filename << "\n";
         }
         else
         {

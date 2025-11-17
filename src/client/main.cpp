@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <string>
-// #include "client.cpp" // tiny trick to keep both compile units in this skeleton
 #include "client.hpp" // tiny trick to keep both compile units in this skeleton
 
 int main(int argc, char **argv)
@@ -34,6 +33,20 @@ int main(int argc, char **argv)
         std::string display = argv[4];
         std::string reason = argv[5];
         send_perm_request(ip, port, display, reason);
+    }
+    else if (cmd == "download")
+    {
+        if (argc < 7)
+        {
+            std::cerr << "Usage: safeshare-client download <ip> <port> <token> <remote_path> <local_path>\n";
+            return 1;
+        }
+        std::string ip = argv[2];
+        int port = std::stoi(argv[3]);
+        std::string token = argv[4];
+        std::string rpath = argv[5];
+        std::string lpath = argv[6];
+        download_file(ip, port, token, rpath, lpath);
     }
     return 0;
 }

@@ -1,1 +1,0 @@
-/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/safeshare-client.dir/link.d "CMakeFiles/safeshare-client.dir/main.cpp.o" "CMakeFiles/safeshare-client.dir/client.cpp.o" -o safeshare-client  ../discovery/libdiscovery.a

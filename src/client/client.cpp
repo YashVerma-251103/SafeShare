@@ -7,6 +7,13 @@
 #include <vector>
 #include "../common/framing.hpp"
 #include "../discovery/discovery.hpp"
+#include <netinet/in.h>
+
+
+using json = nlohmann::json;
+
+#include "protocol.hpp"
+// #include "client.hpp"
 
 using json = nlohmann::json;
 

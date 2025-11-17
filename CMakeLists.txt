@@ -13,6 +13,8 @@ option(BUILD_DISCOVERY "Build discovery" ON)
 # find libs
 find_package(OpenSSL REQUIRED)
 find_package(SQLite3 REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(Threads REQUIRED)
 
 include_directories(${OPENSSL_INCLUDE_DIR} ${SQLITE3_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/third_party)
 

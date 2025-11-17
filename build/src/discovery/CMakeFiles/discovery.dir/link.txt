@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdiscovery.a CMakeFiles/discovery.dir/udp_announcer.cpp.o CMakeFiles/discovery.dir/udp_listener.cpp.o
+/usr/bin/ranlib libdiscovery.a

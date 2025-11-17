@@ -1,5 +1,16 @@
 // ? accept TLS connections, dispatch message handler.
 
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <thread>
+#include <iostream>
+
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
+#include "protocol.hpp"
 #include "server.hpp"
 
 Server::Server(int port, const std::string &shared_root)

@@ -109,9 +109,24 @@ void download_file(const std::string &ip, int port, const std::string &token, co
             std::cout << "\nDownload complete!\n";
             receiving = false;
         }
+        // else if (type == proto::MSG_ERROR) {
+        //     std::cerr << "\nError from server: " << header.value("message", "unknown") << "\n";
+        //     receiving = false;
+        // }
+        // --- NEW: Better Error Handling ---
         else if (type == proto::MSG_ERROR) {
-            std::cerr << "\nError from server: " << header.value("message", "unknown") << "\n";
+            std::string msg = header.value("message", "unknown");
+            std::cerr << "\n[!] Server Error: " << msg << "\n";
+            
+            if (msg == "ACCESS_DENIED_BY_HOST") {
+                std::cerr << "[!] The owner of the file denied your request.\n";
+            }
             receiving = false;
+            // Clean up the empty file if we created it
+            if (outfile.is_open()) {
+                outfile.close();
+                std::remove(local_path.c_str()); 
+            }
         }
     }
 

@@ -1,70 +1,15 @@
-// #include <sys/socket.h>
-// #include <arpa/inet.h>
-// #include <unistd.h>
-// #include <nlohmann/json.hpp>
-// #include <string>
-// #include <iostream>
-// #include <vector>
-// #include "../common/framing.hpp"
-// #include "../discovery/discovery.hpp"
-// #include <netinet/in.h>
-// #include <fstream>
-
-
-// using json = nlohmann::json;
-
-// #include "protocol.hpp"
-// // #include "client.hpp"
-
-// using json = nlohmann::json;
-
-// void send_perm_request(const std::string &ip, int port, const std::string &display, const std::string &reason)
-// {
-//     int fd = socket(AF_INET, SOCK_STREAM, 0);
-//     sockaddr_in addr{};
-//     addr.sin_family = AF_INET;
-//     addr.sin_port = htons(port);
-//     inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
-//     if (connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0)
-//     {
-//         perror("connect");
-//         close(fd);
-//         return;
-//     }
-//     json req;
-//     req["type"] = proto::MSG_PERM_REQUEST;
-//     req["id"] = display + "-req";
-//     req["from_device"] = display + "-dev";
-//     req["display_name"] = display;
-//     req["reason"] = reason;
-//     if (!send_frame(fd, req))
-//     {
-//         std::cerr << "send failed\n";
-//         close(fd);
-//         return;
-//     }
-//     // wait for response
-//     json hdr;
-//     std::vector<uint8_t> payload;
-//     if (!read_frame(fd, hdr, payload))
-//     {
-//         std::cerr << "no response\n";
-//         close(fd);
-//         return;
-//     }
-//     std::cerr << "Response: " << hdr.dump() << "\n";
-//     close(fd);
-// }
 #pragma once
+
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <nlohmann/json.hpp>
 #include <string>
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <filesystem> 
+#include <nlohmann/json.hpp>
+
 #include "../common/framing.hpp"
 #include "../discovery/discovery.hpp"
 #include "../common/protocol.hpp"
@@ -147,7 +92,7 @@ inline std::string download_file(const std::string &ip, int port, const std::str
     req["path"] = remote_path;
     send_frame(fd, req);
 
-    // Note: We assume the caller ensures the directory exists
+    // ! Note: We assume the caller ensures the directory exists
     std::ofstream outfile(local_path, std::ios::binary);
     if (!outfile.is_open()) { close(fd); return "File Write Error: " + local_path; }
 
@@ -168,7 +113,7 @@ inline std::string download_file(const std::string &ip, int port, const std::str
             result = "Error: " + header.value("message", "Unknown");
             receiving = false;
             outfile.close();
-            std::remove(local_path.c_str()); // delete partial
+            std::remove(local_path.c_str()); // * delete partial
         }
     }
     if (outfile.is_open()) outfile.close();

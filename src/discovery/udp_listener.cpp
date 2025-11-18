@@ -1,13 +1,14 @@
 // ? listen for announcements and update local cache.
 
-#include "discovery.hpp"
-#include "../common/protocol.hpp"
-#include <nlohmann/json.hpp>
-#include <sys/socket.h>
-#include <arpa/inet.h>
 #include <unistd.h>
 #include <vector>
 #include <chrono>
+#include <nlohmann/json.hpp>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+#include "discovery.hpp"
+#include "../common/protocol.hpp"
 
 using json = nlohmann::json;
 

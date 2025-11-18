@@ -5,12 +5,11 @@
 #include <unistd.h>
 #include <cstring>
 #include <sstream>
-#include <filesystem> // Added for creating directories
+#include <filesystem>
 #include "../common/state.hpp"
 #include "../discovery/discovery.hpp"
 #include "../client/client.hpp" 
 
-// Use std::filesystem alias if not already defined in included headers
 namespace fs = std::filesystem;
 
 const char* HTML_PAGE = R"HTML(
@@ -49,15 +48,15 @@ const char* HTML_PAGE = R"HTML(
     <div class="panel">
         <h2>Server Mode (Status)</h2>
         <p>🟢 Active on port 55001</p>
+        <p>📂 Sharing from: <code id="shared-path">./shared</code></p>
         <p>💾 Downloads save to: <code>./downloads/</code></p>
     </div>
 </div>
 
 <script>
+// [FIX 1] Removed localStorage. Tokens are now session-only.
 let knownTokens = {};
-try { if(localStorage.getItem('safeTokens')) knownTokens = JSON.parse(localStorage.getItem('safeTokens')); } catch(e){}
 
-// Poll for requests
 setInterval(async () => {
     try {
         let res = await fetch('/api/requests');
@@ -75,6 +74,7 @@ setInterval(async () => {
 }, 1000);
 
 async function decide(id, accept) { await fetch(`/api/respond?id=${id}&ans=` + (accept ? 'yes' : 'no')); }
+
 async function scan() {
     let res = await fetch('/api/scan');
     renderPeers(await res.json());
@@ -103,7 +103,7 @@ async function pair(ip, port) {
     if(j.status === "ok") {
         alert("Paired!");
         knownTokens[ip] = j.token;
-        localStorage.setItem('safeTokens', JSON.stringify(knownTokens));
+        // [FIX 1] No localStorage saving
         scan();
     } else alert("Failed: " + j.message);
 }
@@ -119,6 +119,12 @@ async function browse(ip, port, name) {
     let res = await fetch(`/api/list?ip=${ip}&port=${port}&token=${token}`);
     let files = await res.json();
     
+    // [FIX 2] Handle empty list or error
+    if (files.length === 0) {
+        document.getElementById('file-list').innerHTML = "<p><i>No files found or Access Denied. (Try repairing)</i></p>";
+        return;
+    }
+
     let html = "<table><tr><th>Filename</th><th>Action</th></tr>";
     files.forEach(f => {
         html += `<tr>
@@ -151,7 +157,6 @@ void handle_http(int fd) {
     std::string resp_body = "{}";
     std::string ctype = "text/html";
 
-    // --- API HANDLERS ---
     if (req.find("GET / ") != std::string::npos) {
         resp_body = HTML_PAGE;
     }
@@ -196,7 +201,6 @@ void handle_http(int fd) {
         std::string t = send_perm_request(ip, std::stoi(port), "WebNode", reason);
         resp_body = t.empty() ? "{ \"status\":\"error\", \"message\":\"Failed\" }" : "{ \"status\":\"ok\", \"token\":\"" + t + "\" }";
     }
-    // --- NEW: LIST FILES ---
     else if (req.find("GET /api/list") != std::string::npos) {
         ctype = "application/json";
         std::string ip="0", port="0", token="";
@@ -213,7 +217,6 @@ void handle_http(int fd) {
         }
         resp_body += "]";
     }
-    // --- NEW: DOWNLOAD ---
     else if (req.find("GET /api/download") != std::string::npos) {
         std::string ip="0", port="0", token="", file="";
         auto p1=req.find("ip="); auto p2=req.find("port="); auto p3=req.find("token="); auto p4=req.find("file=");
@@ -222,10 +225,8 @@ void handle_http(int fd) {
         if(p3!=std::string::npos) token=req.substr(p3+6, req.find("&", p3)-(p3+6));
         if(p4!=std::string::npos) file=req.substr(p4+5, req.find(" ", p4)-(p4+5));
 
-        // Ensure "downloads" directory exists
         if (!fs::exists("downloads")) fs::create_directory("downloads");
-        
-        // Pass the specific destination path
+        // [FIX 2] Pass the full local path again
         std::string status = download_file(ip, std::stoi(port), token, file, "downloads/" + file);
         resp_body = status;
     }
@@ -235,7 +236,6 @@ void handle_http(int fd) {
     close(fd);
 }
 
-// Start server function remains identical...
 void start_web_server() {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;

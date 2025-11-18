@@ -55,7 +55,6 @@
 //     std::cerr << "Response: " << hdr.dump() << "\n";
 //     close(fd);
 // }
-
 #pragma once
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -64,14 +63,16 @@
 #include <string>
 #include <iostream>
 #include <vector>
-#include <fstream> // Added for file ops
+#include <fstream>
+#include <filesystem> 
 #include "../common/framing.hpp"
 #include "../discovery/discovery.hpp"
 #include "../common/protocol.hpp"
 
 using json = nlohmann::json;
+namespace fs = std::filesystem;
 
-// CHANGED: Returns the token string on success, empty string on failure
+// 1. Request Permission (Returns Token)
 inline std::string send_perm_request(const std::string &ip, int port, const std::string &display, const std::string &reason)
 {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -80,9 +81,7 @@ inline std::string send_perm_request(const std::string &ip, int port, const std:
     addr.sin_port = htons(port);
     inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
     
-    if (connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0) {
-        return ""; // Connection failed
-    }
+    if (connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0) return "";
 
     json req;
     req["type"] = proto::MSG_PERM_REQUEST;
@@ -93,94 +92,86 @@ inline std::string send_perm_request(const std::string &ip, int port, const std:
 
     if (!send_frame(fd, req)) { close(fd); return ""; }
 
-    // Wait for response
     json hdr;
     std::vector<uint8_t> payload;
     if (!read_frame(fd, hdr, payload)) { close(fd); return ""; }
-
     close(fd);
 
-    // Check if accepted
-    if (hdr.value("status", "") == "ACCEPT") {
-        return hdr.value("token", "");
-    }
+    if (hdr.value("status", "") == "ACCEPT") return hdr.value("token", "");
     return "";
 }
 
-// reexport scan_once to client main
+// 2. List Remote Files
+inline std::vector<std::string> list_remote_files(const std::string &ip, int port, const std::string &token)
+{
+    std::vector<std::string> files;
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET; addr.sin_port = htons(port);
+    inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
 
+    if (connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0) return files;
 
-void download_file(const std::string &ip, int port, const std::string &token, const std::string &remote_path, const std::string &local_path)
+    json req;
+    req["type"] = proto::MSG_LIST;
+    req["token"] = token;
+    req["path"] = ".";
+    send_frame(fd, req);
+
+    json resp;
+    std::vector<uint8_t> payload;
+    if (read_frame(fd, resp, payload)) {
+        if (resp["status"] == "OK" && resp.contains("entries")) {
+            for (auto &f : resp["entries"]) {
+                files.push_back(f.get<std::string>());
+            }
+        }
+    }
+    close(fd);
+    return files;
+}
+
+// 3. Download File (FIXED: Added local_path argument back)
+inline std::string download_file(const std::string &ip, int port, const std::string &token, const std::string &remote_path, const std::string &local_path)
 {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in addr{};
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
+    addr.sin_family = AF_INET; addr.sin_port = htons(port);
     inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
 
-    if (connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0) {
-        perror("connect");
-        return;
-    }
+    if (connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0) return "Connection Failed";
 
-    // 1. Send Request
     json req;
     req["type"] = proto::MSG_DOWNLOAD_REQ;
     req["token"] = token;
     req["path"] = remote_path;
     send_frame(fd, req);
 
-    // 2. Loop to receive chunks
+    // Note: We assume the caller ensures the directory exists
+    std::ofstream outfile(local_path, std::ios::binary);
+    if (!outfile.is_open()) { close(fd); return "File Write Error: " + local_path; }
+
     json header;
     std::vector<uint8_t> payload;
-    std::ofstream outfile;
     bool receiving = true;
-    size_t total_bytes = 0;
+    std::string result = "Download Complete: " + local_path;
 
     while (receiving && read_frame(fd, header, payload)) {
         std::string type = header.value("type", "");
-
-        if (type == proto::MSG_DOWNLOAD_RESP) {
-            std::cout << "Starting download...\n";
-            outfile.open(local_path, std::ios::binary);
-            if (!outfile.is_open()) {
-                std::cerr << "Failed to open local file for writing.\n";
-                close(fd);
-                return;
-            }
-        }
-        else if (type == proto::MSG_FILE_CHUNK) {
-            if (outfile.is_open()) {
-                outfile.write((char*)payload.data(), payload.size());
-                total_bytes += payload.size();
-                std::cout << "\rReceived: " << total_bytes << " bytes" << std::flush;
-            }
+        if (type == proto::MSG_FILE_CHUNK) {
+            outfile.write((char*)payload.data(), payload.size());
         }
         else if (type == proto::MSG_TRANSFER_END) {
-            std::cout << "\nDownload complete!\n";
             receiving = false;
         }
-        // else if (type == proto::MSG_ERROR) {
-        //     std::cerr << "\nError from server: " << header.value("message", "unknown") << "\n";
-        //     receiving = false;
-        // }
-        // --- NEW: Better Error Handling ---
         else if (type == proto::MSG_ERROR) {
-            std::string msg = header.value("message", "unknown");
-            std::cerr << "\n[!] Server Error: " << msg << "\n";
-            
-            if (msg == "ACCESS_DENIED_BY_HOST") {
-                std::cerr << "[!] The owner of the file denied your request.\n";
-            }
+            result = "Error: " + header.value("message", "Unknown");
             receiving = false;
-            // Clean up the empty file if we created it
-            if (outfile.is_open()) {
-                outfile.close();
-                std::remove(local_path.c_str()); 
-            }
+            outfile.close();
+            std::remove(local_path.c_str()); // delete partial
         }
     }
-
     if (outfile.is_open()) outfile.close();
     close(fd);
+    return result;
 }

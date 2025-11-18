@@ -10,7 +10,7 @@
 
 using json = nlohmann::json;
 
-// read exactly N bytes from fd
+// * read exactly N bytes from fd
 static inline bool read_n(int fd, void *buf, size_t n)
 {
     size_t off = 0;
@@ -24,7 +24,7 @@ static inline bool read_n(int fd, void *buf, size_t n)
     return true;
 }
 
-// write exactly N bytes
+// * write exactly N bytes
 static inline bool write_n(int fd, const void *buf, size_t n)
 {
     size_t off = 0;
@@ -38,7 +38,7 @@ static inline bool write_n(int fd, const void *buf, size_t n)
     return true;
 }
 
-// Read a frame: 4-byte BE length (header length), then header JSON string, then if header contains "payload_len" read that many bytes
+// * Read a frame: 4-byte BE length (header length), then header JSON string, then if header contains "payload_len" read that many bytes
 static inline bool read_frame(int fd, json &header, std::vector<uint8_t> &payload)
 {
     uint32_t be_len;

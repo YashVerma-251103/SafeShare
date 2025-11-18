@@ -1,8 +1,6 @@
-// ? simple CLI client to discover and send PERM_REQUEST.
-
 #include <iostream>
 #include <string>
-#include "client.hpp" // tiny trick to keep both compile units in this skeleton
+#include "client.hpp"
 
 int main(int argc, char **argv)
 {
@@ -74,7 +72,7 @@ int main(int argc, char **argv)
         json req;
         req["type"] = proto::MSG_LIST;
         req["token"] = token;
-        req["path"] = "."; // Ask for root directory
+        req["path"] = ".";
         send_frame(fd, req);
 
         json resp;

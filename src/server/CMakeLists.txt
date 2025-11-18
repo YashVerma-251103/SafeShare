@@ -1,15 +1,3 @@
-# add_executable(safeshare-server
-# main.cpp
-# server.cpp
-# token_manager.cpp
-# file_manager.cpp
-# chat_manager.cpp
-# )
-# target_link_libraries(safeshare-server PRIVATE discovery common ${SQLITE3_LIBRARIES} Threads::Threads)
-# include_directories(${SQLITE3_INCLUDE_DIRS})
-
-# src/server/CMakeLists.txt
-
 # Name the output executable "safeshare-node"
 add_executable(safeshare-node
     ../main.cpp               # The Unified Entry Point

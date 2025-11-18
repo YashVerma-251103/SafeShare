@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     // Start Announcer
     start_announcer("SafeShare-Device", port);
 
-    // FIX: use shared_dir, not "shared"
+    // use shared_dir
     Server s(port, shared_dir);
     s.run();
 

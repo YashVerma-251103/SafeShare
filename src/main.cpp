@@ -11,7 +11,7 @@ void start_web_server();
 int main(int argc, char **argv) {
     int port = 55001;
     
-    // [FIX 3] Smart Shared Folder Detection
+    // Smart Shared Folder Detection
     // 1. Try ./shared (if running from root)
     // 2. Try ../shared (if running from build/)
     // 3. Default to ./shared if neither found (it will be created)

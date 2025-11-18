@@ -1,3 +1,62 @@
+// #include <sys/socket.h>
+// #include <arpa/inet.h>
+// #include <unistd.h>
+// #include <nlohmann/json.hpp>
+// #include <string>
+// #include <iostream>
+// #include <vector>
+// #include "../common/framing.hpp"
+// #include "../discovery/discovery.hpp"
+// #include <netinet/in.h>
+// #include <fstream>
+
+
+// using json = nlohmann::json;
+
+// #include "protocol.hpp"
+// // #include "client.hpp"
+
+// using json = nlohmann::json;
+
+// void send_perm_request(const std::string &ip, int port, const std::string &display, const std::string &reason)
+// {
+//     int fd = socket(AF_INET, SOCK_STREAM, 0);
+//     sockaddr_in addr{};
+//     addr.sin_family = AF_INET;
+//     addr.sin_port = htons(port);
+//     inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
+//     if (connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0)
+//     {
+//         perror("connect");
+//         close(fd);
+//         return;
+//     }
+//     json req;
+//     req["type"] = proto::MSG_PERM_REQUEST;
+//     req["id"] = display + "-req";
+//     req["from_device"] = display + "-dev";
+//     req["display_name"] = display;
+//     req["reason"] = reason;
+//     if (!send_frame(fd, req))
+//     {
+//         std::cerr << "send failed\n";
+//         close(fd);
+//         return;
+//     }
+//     // wait for response
+//     json hdr;
+//     std::vector<uint8_t> payload;
+//     if (!read_frame(fd, hdr, payload))
+//     {
+//         std::cerr << "no response\n";
+//         close(fd);
+//         return;
+//     }
+//     std::cerr << "Response: " << hdr.dump() << "\n";
+//     close(fd);
+// }
+
+#pragma once
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -5,55 +64,47 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <fstream> // Added for file ops
 #include "../common/framing.hpp"
 #include "../discovery/discovery.hpp"
-#include <netinet/in.h>
-#include <fstream>
-
+#include "../common/protocol.hpp"
 
 using json = nlohmann::json;
 
-#include "protocol.hpp"
-// #include "client.hpp"
-
-using json = nlohmann::json;
-
-void send_perm_request(const std::string &ip, int port, const std::string &display, const std::string &reason)
+// CHANGED: Returns the token string on success, empty string on failure
+inline std::string send_perm_request(const std::string &ip, int port, const std::string &display, const std::string &reason)
 {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
-    if (connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0)
-    {
-        perror("connect");
-        close(fd);
-        return;
+    
+    if (connect(fd, (sockaddr *)&addr, sizeof(addr)) < 0) {
+        return ""; // Connection failed
     }
+
     json req;
     req["type"] = proto::MSG_PERM_REQUEST;
     req["id"] = display + "-req";
     req["from_device"] = display + "-dev";
     req["display_name"] = display;
     req["reason"] = reason;
-    if (!send_frame(fd, req))
-    {
-        std::cerr << "send failed\n";
-        close(fd);
-        return;
-    }
-    // wait for response
+
+    if (!send_frame(fd, req)) { close(fd); return ""; }
+
+    // Wait for response
     json hdr;
     std::vector<uint8_t> payload;
-    if (!read_frame(fd, hdr, payload))
-    {
-        std::cerr << "no response\n";
-        close(fd);
-        return;
-    }
-    std::cerr << "Response: " << hdr.dump() << "\n";
+    if (!read_frame(fd, hdr, payload)) { close(fd); return ""; }
+
     close(fd);
+
+    // Check if accepted
+    if (hdr.value("status", "") == "ACCEPT") {
+        return hdr.value("token", "");
+    }
+    return "";
 }
 
 // reexport scan_once to client main

@@ -20,5 +20,23 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+# Run discover until peer found or till 10 iternations 
+if [ "$1" == "discover" ]; then
+    MAX_ATTEMPTS=10
+    ATTEMPT=1
+    while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+        echo "Attempt $ATTEMPT to discover peers..."
+        "$BUILD_PATH" discover
+        if [ $? -eq 1 ]; then
+            echo "Peer discovered successfully."
+            exit 0
+        fi
+        ATTEMPT=$((ATTEMPT + 1))
+        sleep 2
+    done
+    echo "Failed to discover peers after $MAX_ATTEMPTS attempts."
+    exit 1
+fi
+
 # 3. Run the client with passed arguments
 "$BUILD_PATH" "$@"

@@ -86,8 +86,8 @@ make
 
 ### Future Plan 
 
-**1. Add secure Upload File Feature.**
-**2. Add a pause download feature for larger files.**
-**1. Try to replicate the actual torrent working with the file being shared among peers.**
+**1. Add secure Upload File Feature.**  
+**2. Add a pause download feature for larger files.**  
+**1. Try to replicate the actual torrent working with the file being shared among peers.**  
 
 -----

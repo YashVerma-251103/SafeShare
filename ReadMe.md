@@ -3,6 +3,8 @@
 **SafeShare** is a consent-first, peer-to-peer file sharing and messaging application designed for Local Area Networks (LAN). Unlike standard FTP or SMB services, SafeShare requires explicit user approval (via a token) before any peer can access files, ensuring security and control. We were inspired by the torrent network model but tailored for trusted environments like home or office networks.
 
 -----
+## Demo Video : [video][https://drive.google.com/file/d/1N2QI2E207VpiOzKRvt1r6AN7aiF6F4Ea/view?usp=sharing]
+
 
 ## Networking Concepts Implemented
 

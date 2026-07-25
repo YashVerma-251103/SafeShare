@@ -3,7 +3,8 @@ from typing import List
 import client
 
 def showUsage()->None:
-    pass
+    print("Usage : safeshare-client discover | request <ip> <port> <display_name> <reasons>")
+
 def discoverPeers()->None:
     pass
 def request(args:List)->int:

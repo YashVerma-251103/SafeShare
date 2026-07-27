@@ -3,7 +3,7 @@ import json, socket, struct
 from typing import List
 
 from Py.common.protocol import Commands, Status
-from discovery.udpListener import Listener
+from discovery.discovery import Listener
 from client.client import Client
 
 

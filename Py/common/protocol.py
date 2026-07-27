@@ -1,0 +1,41 @@
+from enum import Enum
+
+class Ports(Enum):
+    DEFAULT = 55001
+    DISCOVERY = 55000
+
+class Commands(Enum):
+    DISCOVER = "DISCOVER"
+    REQUEST = "REQUEST"
+    DOWNLOAD = "DOWNLOAD"
+    LIST = "LIST"
+
+
+class Status(Enum):
+    RESPONSE_OK = "OK"
+    OK = 0
+    ERROR = 1
+    FAILED = 2
+    SUCCESS = 3
+    ACCEPT = 4
+    WAITING = 5
+    DENY = 6
+
+class MSG(Enum):
+    ANNOUNCE = "MSG_ANNOUNCE"
+    ERROR = "MSG_ERROR"
+
+    PERM_REQ = "MSG_PERM_REQ"
+    PERM_RESP = "MSG_PERM_RESP"
+
+    CHAT_SEND = "MSG_PERM_SEND"
+    CHAT_RECV = "MSG_PERM_RECV"
+
+    LIST_REQ = "MSG_LIST"
+    LIST_RESP = "MSG_LIST_RESP"
+
+    DOWNLOAD_REQ = "MSG_DOWNLOAD_REQ"
+    DOWNLOAD_RESP = "MSG_DOWNLOAD_RESP"
+    
+    FILE_CHUNK = "MSG_FILE_CHUNK"
+    TRANSFER_END = "MSG_TRANSFER_END"

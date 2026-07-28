@@ -29,7 +29,7 @@ class Client:
                     return None
 
                 header = response["header"]
-                if Status.RESPONSE_OK == header.get("status"):
+                if Status.OK == header.get("status"):
                     if need_return:
                         files = header.get("entries", [])
                     else:

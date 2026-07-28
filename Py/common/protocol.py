@@ -1,7 +1,8 @@
 from enum import Enum
 
-
-DEFAULT_LISTEN_TIME = 800
+class Times(Enum):
+    DEFAULT_LISTEN_TIME = 800
+    DEFAULT_TTL = 900
 
 class IPs(Enum):
     BROADCAST_IP = "255.255.255.255"
@@ -19,7 +20,6 @@ class Commands(Enum):
 
 
 class Status(Enum):
-    RESPONSE_OK = "OK"
     OK = 0
     ERROR = 1
     FAILED = 2
@@ -31,6 +31,8 @@ class Status(Enum):
 class MSG(Enum):
     ANNOUNCE = "MSG_ANNOUNCE"
     ERROR = "MSG_ERROR"
+    UNKNOWN = "MSG_UNKNOWN"
+    UNAUTH = "MSG_UNAUTHORIZED"
 
     PERM_REQ = "MSG_PERM_REQ"
     PERM_RESP = "MSG_PERM_RESP"

@@ -1,9 +1,9 @@
 import argparse, sys
 import json, socket, struct
-from typing import List
+from typing import List,Dict
 
-from Py.common.protocol import Commands, Status
-from discovery.discovery import Listener
+from Py.common.protocol import Commands, Status, Ports
+from discovery.discovery import Discovery
 from client.client import Client
 
 
@@ -13,15 +13,15 @@ def showUsage() -> None:
     )
 
 
-def discoverPeers(args: dict) -> None:
-    ms: int = args["ms"] if "ms" in args else 800
-    peers = Listener.scanOnce(ms)
+def discoverPeers(args: Dict) -> None:
+    ms: int = args["ms"] if "ms" in args else Ports.DEFAULT_LISTEN_TIME
+    peers = Discovery.scanOnce(ms)
     print(f"Found {len(peers)} peers:")
     for p in peers:
         print(f"{p.name} ({p.device_id}) @ {p.ip} : {p.port}")
 
 
-def request(args: dict) -> None:
+def request(args: Dict) -> None:
 
     if len(args) != 5:
         print("Usage: safeshare-client request <ip> <port> <display_name> <reason>")
@@ -33,7 +33,7 @@ def request(args: dict) -> None:
     Client.sendPermRequest(ip, port, display, reason)
 
 
-def listFiles(args: dict, need_return: bool = False) -> List[str] | None:
+def listFiles(args: Dict, need_return: bool = False) -> List[str] | None:
     if len(args) != 4:
         print("Usage: safeshare-client list <ip> <port> <token>")
         return None
@@ -47,7 +47,7 @@ def listFiles(args: dict, need_return: bool = False) -> List[str] | None:
     return files
 
 
-def download(args: dict) -> None:
+def download(args: Dict) -> None:
     if len(args) != 6:
         print(
             "Usage: safeshare-client download <ip> <port> <token> <remote_path> <local_path>"
@@ -63,7 +63,7 @@ def download(args: dict) -> None:
     Client.downloadFile(ip, port, token, r_path, l_path)
 
 
-def driver(args: dict) -> None:
+def driver(args: Dict) -> None:
     if "cmd" not in args:
         showUsage()
         return None
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         "Port": ["--port", int, "Corresponding IP Port you want to connect to."],
         "Display Name": ["--display", str, "Your Machine Display Name."],
         "Reasons": ["--reason", str, "Reason for Connection with other Party."],
-        "Listen Time": ["--ms", int, "Time for listener scan in ms."],
+        "Listen Time": ["--ms", int, "Time for Discovery scan in ms."],
         "Auth Token": ["--token", str, "Auth Token recieved."],
         "Remote Path": ["--r_path", str, "Remote Path"],
         "Local Path": ["--l_path", str, "Local Path"],

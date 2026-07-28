@@ -1,3 +1,5 @@
+# common/framing.py
+
 import json, struct
 import os, sys, socket
 from pathlib import Path
@@ -40,8 +42,8 @@ class Frame:
             header["payload_len"] = len(payload)
 
         request = json.dumps(header).encode(encoding)
-        payload_len = struct.pack(format, len(payload))
-        send_payload = payload_len + request + bytes(payload)
+        hdr_len = struct.pack(format, len(request))
+        send_payload = hdr_len + request + bytes(payload)
 
         return send_payload
 

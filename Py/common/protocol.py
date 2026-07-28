@@ -1,5 +1,12 @@
 from enum import Enum
 
+
+DEFAULT_LISTEN_TIME = 800
+
+class IPs(Enum):
+    BROADCAST_IP = "255.255.255.255"
+    ALL_INTERFACE_IP = "0.0.0.0"
+
 class Ports(Enum):
     DEFAULT = 55001
     DISCOVERY = 55000

@@ -1,7 +1,7 @@
 import json, struct
 import os, sys, socket
 from pathlib import Path
-
+from typing import Dict
 from Py.common.protocol import Status
 
 
@@ -17,7 +17,7 @@ class Frame:
         return bytes(data)
 
     @staticmethod
-    def __createRequestPayload(data: dict, format: str = ">I", encoding: str = "utf-8"):
+    def __createRequestPayload(data: Dict, format: str = ">I", encoding: str = "utf-8"):
         """
         Big-endian unsigned 4-byte length + JSON header.
         If data contains a reserved key '_payload', it will be sent as raw bytes
@@ -57,7 +57,7 @@ class Frame:
     @staticmethod
     def read(
         sock: socket.socket, format: str = ">I", encoding: str = "utf-8"
-    ) -> int | dict:
+    ) -> int | Dict:
         try:
             hdr_len_bytes = Frame.__recvExact(sock, 4)
             hdr_len = struct.unpack(format, hdr_len_bytes)[0]

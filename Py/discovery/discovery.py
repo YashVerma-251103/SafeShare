@@ -52,7 +52,7 @@ class Discovery:
         return t
     
     @staticmethod
-    def scanOnce(listen_ms: int = Ports.DEFAULT_LISTEN_TIME) -> List[DiscoveredPeer]:
+    def scanOnce(listen_ms: int = Times.DEFAULT_LISTEN_TIME) -> List[DiscoveredPeer]:
 
         res = list()
         buff_size = 8192
